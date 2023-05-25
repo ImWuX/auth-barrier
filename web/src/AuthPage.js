@@ -20,8 +20,7 @@ const AuthPage = ({ isRegister }) => {
             },
             body: JSON.stringify({ username, password })
         });
-        const data = await res.json();
-        if(res.status != 200) return setError(data.error);
+        if(res.status != 200) return setError(await res.json().error);
         setError(undefined);
     }
 

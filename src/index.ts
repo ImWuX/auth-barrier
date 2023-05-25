@@ -21,11 +21,13 @@ declare global {
             PORT: string;
             REDIS_URL: string;
             SESSION_LENGTH: string;
+            ROOT_DOMAIN: string;
         }
     }
 }
 
 const DEFAULT_PERMISSIONS = 0;
+const COOKIE_NAME = "authbarrier_session_secret";
 
 const prisma = new PrismaClient();
 const app = express();
@@ -41,10 +43,10 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use(async (req: Request, res: Response, next: NextFunction) => {
-    if(!req.cookies.authbarrier_session_secret) return next();
+    if(!req.cookies[COOKIE_NAME]) return next();
     try {
-        if(!await redisClient.exists(req.cookies.authbarrier_session_secret)) return next();
-        req.sessionSecret = req.cookies.authbarrier_session_secret;
+        if(!await redisClient.exists(req.cookies[COOKIE_NAME])) return next();
+        req.sessionSecret = req.cookies[COOKIE_NAME];
     } catch(err) {
         console.error(err);
     }
@@ -92,9 +94,12 @@ app.post("/api/login", async (req: Request, res: Response, next: NextFunction) =
 
         if(!isPasswordValid) return res.status(401).send({ error: { password: "Wrong password" }});
 
-        res.send({
-            session: await createSession(user.id)
-        });
+        const session = await createSession(user.id);
+        res.cookie(COOKIE_NAME, session.secret, {
+            domain: `.${process.env.ROOT_DOMAIN}`,
+            path: "/",
+            maxAge: Number(process.env.SESSION_LENGTH)
+        }).send();
     } catch(err) {
         next(err);
     }
@@ -123,9 +128,12 @@ app.post("/api/register", async (req: Request, res: Response, next: NextFunction
             }
         });
 
-        res.send({
-            session: await createSession(user.id)
-        });
+        const session = await createSession(user.id);
+        res.cookie(COOKIE_NAME, session.secret, {
+            domain: `.${process.env.ROOT_DOMAIN}`,
+            path: "/",
+            maxAge: Number(process.env.SESSION_LENGTH)
+        }).send();
     } catch(err) {
         next(err);
     }
