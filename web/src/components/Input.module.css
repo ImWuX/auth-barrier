@@ -1,0 +1,25 @@
+.input {
+    padding: 10px;
+    font-size: 1rem;
+    outline: none;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.input::placeholder {
+    color: white;
+}
+
+.input:focus {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.input:focus::placeholder {
+    opacity: 0;
+}
+
+.input:disabled {
+    color: rgba(255, 255, 255, 0.2);
+}

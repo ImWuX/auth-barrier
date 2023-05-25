@@ -1,0 +1,25 @@
+.container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.footer {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.logo {
+    width: 70%;
+    aspect-ratio: 1;
+    margin: 0 15%;
+}
+
+.error {
+    align-self: flex-start;
+    font-size: 0.8rem;
+    color: rgb(255, 107, 107);
+    margin: 0;
+}

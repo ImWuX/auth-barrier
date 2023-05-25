@@ -1,0 +1,31 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap");
+
+*::-webkit-scrollbar {
+    width: 5px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: rgb(200, 200, 200);
+    border-radius: 4px;
+}
+
+:root {
+    box-sizing: border-box;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: "Poppins", sans-serif;
+    color: white;
+    box-sizing: inherit;
+}
+
+body {
+    background-color: rgb(18, 18, 18);
+    background-image:
+        radial-gradient(at 4% 8%, hsla(335,70%,54%,1) 0px, transparent 50%),
+        radial-gradient(at 26% 63%, hsla(260,74%,61%,1) 0px, transparent 50%),
+        radial-gradient(at 69% 78%, hsla(321,69%,59%,1) 0px, transparent 50%),
+        radial-gradient(at 79% 15%, hsla(279,66%,56%,1) 0px, transparent 50%);
+}

@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "esModuleInterop": true,
+        "target": "ESNext",
+        "module": "commonjs",
+        "rootDir": "src",
+        "outDir": "build",
+        "moduleResolution": "node",
+        "strict": true,
+    },
+    "exclude": [
+        "web"
+    ]
+}
