@@ -59,7 +59,7 @@ const PortalPage = () => {
 
     const logout = async () => {
         const res = await fetch("/api/auth/logout", { method: "POST" });
-        if(res.status !== 200) return navigate("/login");
+        if(res.status === 200) return navigate("/login");
         toast.error("Failed to logout");
     }
 
@@ -74,7 +74,7 @@ const PortalPage = () => {
                 <Button label="Change Password" onClick={changePassword} />
                 {!session.user.totp ?
                     <Button label="Setup Two Factor Authentication" onClick={setupTotp} /> :
-                    <Button label="Disable Two Factor Authentication" onClick={() => setDisableTotpDialog(true)} />
+                    <Button label="Disable Two Factor Authentication" onClick={() => { setDisableTotpDialog(true); setTotpCode(undefined); }} />
                 }
                 <Button label="Logout" onClick={logout} />
             </Surface>

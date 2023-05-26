@@ -45,7 +45,7 @@ unprotectedRouter.post("/login", async (req: Request, res: Response, next: NextF
 
         if(!isPasswordValid) return res.status(401).send({ error: { password: "Wrong password" }});
 
-        const totp = await prisma.totp.findFirst({ where: { userId: req.userId } });
+        const totp = await prisma.totp.findFirst({ where: { userId: user.id } });
         if(totp && totp.enabled) {
             if(!code) return res.send({ totp: true });
             if(!authenticator.check(code, totp.secret)) return res.status(401).send({ error: { totp: "Invalid two factor code" } })

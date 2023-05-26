@@ -52,7 +52,7 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
 app.get("/nginxauth", async (req: Request, res: Response) => {
     if(!req.sessionSecret) return res.sendStatus(401);
     if(!req.subdomains || req.subdomains.length <= 0) return res.sendStatus(400);
-    res.sendStatus(200);
+    res.sendStatus(202);
 });
 
 app.use("/api/auth", authUnprotectedRoutes);
