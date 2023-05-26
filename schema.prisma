@@ -8,14 +8,29 @@ generator client {
 }
 
 model User {
-    id          Int     @id @default(autoincrement())
-    username    String  @unique
-    password    String
-    permissions BigInt
-    sites       Site[]
+    id              Int     @id @default(autoincrement())
+    username        String  @unique
+    password        String
+    permissions     BigInt
+    sites           Site[]
+    totp            Totp?
+    backupCodes     TotpBackupCodes[]
 }
 
 model Site {
-    name        String @id
-    users       User[]
+    name            String @id
+    users           User[]
+}
+
+model Totp {
+    userId          Int @id
+    secret          String
+    user            User @relation(fields: [userId], references: [id])
+}
+
+model TotpBackupCodes {
+    codeId          Int @id @default(autoincrement())
+    code            String
+    userId          Int
+    user            User @relation(fields: [userId], references: [id])
 }
