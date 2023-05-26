@@ -1,3 +1,9 @@
+.container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
 .input {
     padding: 10px;
     font-size: 1rem;
@@ -22,4 +28,13 @@
 
 .input:disabled {
     color: rgba(255, 255, 255, 0.2);
+}
+
+.error {
+    border-color: rgba(255, 0, 0, 0.5);
+}
+
+.errorlabel {
+    color: rgba(255, 0, 0);
+    font-size: 0.8rem;
 }

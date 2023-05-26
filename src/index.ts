@@ -45,7 +45,7 @@ app.use(express.json());
 app.use(async (req: Request, res: Response, next: NextFunction) => {
     if(!req.cookies[COOKIE_NAME]) return next();
     try {
-        if(!await redisClient.exists(req.cookies[COOKIE_NAME])) return next();
+        if(!await redisClient.exists(`session:${req.cookies[COOKIE_NAME]}`)) return next();
         req.sessionSecret = req.cookies[COOKIE_NAME];
     } catch(err) {
         console.error(err);
@@ -71,8 +71,8 @@ const createSession = async (userId: number): Promise<{
     do {
         secret = crypto.randomBytes(32).toString("hex");
     } while(await redisClient.exists(secret));
-    await redisClient.hSet(secret, "user", userId);
-    await redisClient.expire(secret, Number(process.env.SESSION_LENGTH));
+    await redisClient.hSet(`session:${secret}`, "user", userId);
+    await redisClient.expire(`session:${secret}`, Number(process.env.SESSION_LENGTH));
     return {
         secret
     };
@@ -98,7 +98,7 @@ app.post("/api/login", async (req: Request, res: Response, next: NextFunction) =
         res.cookie(COOKIE_NAME, session.secret, {
             domain: `.${process.env.ROOT_DOMAIN}`,
             path: "/",
-            maxAge: Number(process.env.SESSION_LENGTH)
+            maxAge: Number(process.env.SESSION_LENGTH) * 1000
         }).send();
     } catch(err) {
         next(err);
@@ -132,12 +132,47 @@ app.post("/api/register", async (req: Request, res: Response, next: NextFunction
         res.cookie(COOKIE_NAME, session.secret, {
             domain: `.${process.env.ROOT_DOMAIN}`,
             path: "/",
-            maxAge: Number(process.env.SESSION_LENGTH)
+            maxAge: Number(process.env.SESSION_LENGTH) * 1000
         }).send();
     } catch(err) {
         next(err);
     }
 });
+
+const protectedRouter = express.Router();
+
+protectedRouter.use((req: Request, res: Response, next: NextFunction) => {
+    if(!req.sessionSecret) return res.sendStatus(401);
+    next();
+});
+
+protectedRouter.post("/api/logout", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await redisClient.del(`session:${req.sessionSecret}`);
+        res.clearCookie(COOKIE_NAME, { domain: `.${process.env.ROOT_DOMAIN}` }).send();
+    } catch(err) {
+        next(err);
+    }
+});
+
+protectedRouter.get("/api/session", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = Number(await redisClient.hGet(`session:${req.sessionSecret}`, "user"));
+        if(!userId) return res.status(400).send({ error: "Invalid session user" });
+        const user = await prisma.user.findFirst({ where: { id: userId } });
+        if(!user) return res.status(404).send({ error: "Non-existant session user" });
+        res.send({
+            user: {
+                id: user.id,
+                username: user.username
+            }
+        });
+    } catch(err) {
+        next(err);
+    }
+});
+
+app.use(protectedRouter);
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     if(err instanceof ZodError) {

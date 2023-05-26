@@ -22,6 +22,8 @@
 }
 
 body {
+    width: 100vw;
+    height: 100vh;
     background-color: rgb(18, 18, 18);
     background-image:
         radial-gradient(at 4% 8%, hsla(335,70%,54%,1) 0px, transparent 50%),
