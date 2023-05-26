@@ -46,8 +46,8 @@ const AuthPage = ({ isRegister }) => {
     return (
         <div className={styles.container}>
             <Surface width="300px" stackVertical center>
-                <img className={styles.logo} src="https://host.thenest.dev/images/logo-small.png" alt="logo" />
-                <h1>Auth Barrier</h1>
+                <img className={styles.logo} src="logo.png" alt="logo" />
+                <h1>{process.env.REACT_APP_APP_NAME_SHORT}</h1>
                 {typeof error == "string" && <p className={styles.error}>{error}</p>}
                 <Input label="Username" fillWidth disabled={requireTotp} onChange={setUsername} error={error && error.username} autoComplete="username" />
                 <Input label="Password" fillWidth disabled={requireTotp} password onChange={setPassword} error={error && error.password} autoComplete="currentPassword" />

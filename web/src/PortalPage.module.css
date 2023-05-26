@@ -15,3 +15,19 @@
 .qr {
     border-radius: 10px;
 }
+
+.header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 80px;
+    min-height: 80px;
+    width: 100%;
+}
+
+.header img {
+    width: 50px;
+    aspect-ratio: 1;
+}

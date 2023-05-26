@@ -65,7 +65,10 @@ const PortalPage = () => {
 
     return (
         <div className={styles.container}>
-            <h1>Auth Barrier Portal Page</h1>
+            <div className={styles.header}>
+                <img src="logo.png" alt="logo" />
+                <h1>{process.env.REACT_APP_APP_NAME}</h1>
+            </div>
             <Surface width="100%" stackVertical>
                 <h2 className={styles.username}>{session.user.username}</h2>
                 <Button label="Change Password" onClick={changePassword} />
