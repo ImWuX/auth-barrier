@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from "express";
+import { authenticator } from "otplib";
 import zod from "zod";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -8,9 +9,10 @@ const DEFAULT_PERMISSIONS = 0;
 
 const unprotectedRouter = express.Router();
 
-const zodUser = zod.object({
+const zodAuth = zod.object({
     username: zod.string().min(3).max(16),
-    password: zod.string().min(3).max(128)
+    password: zod.string().min(3).max(128),
+    code: zod.string().optional()
 });
 
 const createSession = async (userId: number): Promise<{
@@ -29,7 +31,7 @@ const createSession = async (userId: number): Promise<{
 
 unprotectedRouter.post("/login", async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { username, password } = zodUser.parse(req.body);
+        const { code, username, password } = zodAuth.parse(req.body);
 
         const user = await prisma.user.findFirst({ where: { username: username } });
         if(user == null) return res.status(404).send({ error: { username: "User does not exist" } });
@@ -43,12 +45,18 @@ unprotectedRouter.post("/login", async (req: Request, res: Response, next: NextF
 
         if(!isPasswordValid) return res.status(401).send({ error: { password: "Wrong password" }});
 
+        const totp = await prisma.totp.findFirst({ where: { userId: req.userId } });
+        if(totp && totp.enabled) {
+            if(!code) return res.send({ totp: true });
+            if(!authenticator.check(code, totp.secret)) return res.status(401).send({ error: { totp: "Invalid two factor code" } })
+        }
+
         const session = await createSession(user.id);
         res.cookie(process.env.COOKIE_NAME, session.secret, {
             domain: `.${process.env.ROOT_DOMAIN}`,
             path: "/",
             maxAge: Number(process.env.SESSION_LENGTH) * 1000
-        }).send();
+        }).send({ totp: false });
     } catch(err) {
         next(err);
     }
@@ -56,7 +64,7 @@ unprotectedRouter.post("/login", async (req: Request, res: Response, next: NextF
 
 unprotectedRouter.post("/register", async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { username, password } = zodUser.parse(req.body);
+        const { username, password } = zodAuth.parse(req.body);
 
         let user = await prisma.user.findFirst({ where: { username: username } });
         if(user != null) return res.status(409).send({ error: { username: "Username is taken" } });
@@ -100,15 +108,15 @@ protectedRouter.post("/logout", async (req: Request, res: Response, next: NextFu
 });
 
 protectedRouter.get("/session", async (req: Request, res: Response, next: NextFunction) => {
+    const user = await prisma.user.findFirst({ where: { id: req.userId } });
+    if(!user) return res.status(404).send({ error: "Non-existant session user" });
+    const totp = await prisma.totp.findFirst({ where: { userId: req.userId } });
     try {
-        const userId = Number(await redis.hGet(`session:${req.sessionSecret}`, "user"));
-        if(!userId) return res.status(400).send({ error: "Invalid session user" });
-        const user = await prisma.user.findFirst({ where: { id: userId } });
-        if(!user) return res.status(404).send({ error: "Non-existant session user" });
         res.send({
             user: {
                 id: user.id,
-                username: user.username
+                username: user.username,
+                totp: totp && totp.enabled
             }
         });
     } catch(err) {

@@ -25,6 +25,7 @@ model Site {
 model Totp {
     userId          Int @id
     secret          String
+    enabled         Boolean
     user            User @relation(fields: [userId], references: [id])
 }
 

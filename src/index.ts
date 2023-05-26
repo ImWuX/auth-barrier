@@ -7,11 +7,13 @@ import { PrismaClient } from "@prisma/client";
 import cookieParser from "cookie-parser";
 import { createClient as createRedisClient } from "redis";
 import { unprotectedRouter as authUnprotectedRoutes, protectedRouter as authProtectedRoutes } from "./routes/auth.js";
+import totpRoutes from "./routes/totp.js";
 
 declare global {
     namespace Express {
         interface Request {
             sessionSecret: string | undefined;
+            userId: number;
         }
     }
 
@@ -57,12 +59,16 @@ app.use("/api/auth", authUnprotectedRoutes);
 
 const protectedRouter = express.Router();
 
-protectedRouter.use((req: Request, res: Response, next: NextFunction) => {
-    if(!req.sessionSecret) return res.sendStatus(401);
+protectedRouter.use(async (req: Request, res: Response, next: NextFunction) => {
+    if(!req.sessionSecret) return res.status(401).send({ error: "No active session" });
+    const userId = Number(await redis.hGet(`session:${req.sessionSecret}`, "user"));
+    if(!userId) return res.status(400).send({ error: "Invalid session user" });
+    req.userId = userId;
     next();
 });
 
 protectedRouter.use("/api/auth", authProtectedRoutes);
+protectedRouter.use("/api/totp", totpRoutes);
 
 app.use(protectedRouter);
 

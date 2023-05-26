@@ -1,0 +1,25 @@
+.overlay {
+    background-color: rgba(0, 0, 0, 0.7);
+    position: fixed;
+    inset: 0;
+}
+
+.content {
+    outline: none;
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 450px;
+    max-height: 85vh;
+    padding: 25px;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 16px 0 rgba(181, 77, 202, 0.164);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}

@@ -11,3 +11,7 @@
 .username {
     font-size: 1.2rem;
 }
+
+.qr {
+    border-radius: 10px;
+}
