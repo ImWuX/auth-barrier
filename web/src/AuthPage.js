@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import styles from "./AuthPage.module.css";
 import Surface from "./components/Surface";
 import Input from "./components/Input";
 import Button from "./components/Button";
 
 const AuthPage = ({ isRegister }) => {
+    const [searchParams] = useSearchParams();
     const [error, setError] = useState();
     const [requireTotp, setRequireTotp] = useState(false);
     const [username, setUsername] = useState("");
@@ -27,7 +28,10 @@ const AuthPage = ({ isRegister }) => {
         if(res.status !== 200) return setError((await res.json()).error);
         if(!isRegister && (await res.json()).totp) return setRequireTotp(true);
         setError(undefined);
-        navigate("/portal");
+        if(searchParams.get("url"))
+            window.open(searchParams.get("url")?.toString(), "_self");
+        else
+            navigate("/portal");
     }, [setError, navigate, isRegister, username, password, confirmPassword, requireTotp, totpCode]);
 
     useEffect(() => {
@@ -59,6 +63,7 @@ const AuthPage = ({ isRegister }) => {
                     : <Link to="/register" className={styles.footer}>Want to create an account? Register</Link>
                 }
             </Surface>
+            <p className={styles.barrier}>Powered by <a href="https://github.com/ImWuX/auth-barrier" target="_blank">Auth Barrier</a></p>
         </div>
     );
 }

@@ -24,14 +24,13 @@ const generateCodes = async (userId: number) => {
 
 router.get("/setup", async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await prisma.user.findFirst({ where: { id: { equals: req.userId } } });
+        const user = await prisma.user.findFirst({ where: { id: { equals: req.userId } }, include: { totp: true } });
         if(!user) return res.status(404).send({ error: "Non-existant session user" });
-        const totp = await prisma.totp.findFirst({ where: { userId: { equals: req.userId } } });
-        if(totp && totp.enabled) return res.status(409).send({ error: "Two factor authentication is already enabled" });
+        if(user.totp && user.totp.enabled) return res.status(409).send({ error: "Two factor authentication is already enabled" });
 
         const secret = authenticator.generateSecret();
         const codes = await generateCodes(req.userId);
-        const url = authenticator.keyuri(user.username, "Auth Barrier", secret);
+        const url = authenticator.keyuri(user.username, process.env.APP_NAME, secret);
 
         await prisma.totp.upsert({
             where: { userId: req.userId },

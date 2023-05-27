@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser";
 import { createClient as createRedisClient } from "redis";
 import { unprotectedRouter as authUnprotectedRoutes, protectedRouter as authProtectedRoutes } from "./routes/auth.js";
 import totpRoutes from "./routes/totp.js";
+import siteRoutes from "./routes/sites.js";
 
 declare global {
     namespace Express {
@@ -19,6 +20,7 @@ declare global {
 
     namespace NodeJS {
         interface ProcessEnv {
+            APP_NAME: string;
             PORT: string;
             REDIS_URL: string;
             SESSION_LENGTH: string;
@@ -51,26 +53,62 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
 
 app.get("/nginxauth", async (req: Request, res: Response) => {
     if(!req.sessionSecret) return res.sendStatus(401);
-    if(!req.subdomains || req.subdomains.length <= 0) return res.sendStatus(400);
-    res.sendStatus(202);
+    if(!req.subdomains || req.subdomains.length <= 0) return res.sendStatus(404);
+
+    const userId = Number(await redis.hGet(`session:${req.sessionSecret}`, "user"));
+    if(!userId) return res.sendStatus(401);
+    const user = await prisma.user.findFirst({ where: { id: userId }, include: { sites: true } });
+    if(!user) return res.sendStatus(401);
+    if(user.admin) return res.sendStatus(200);
+
+    for(const site of user.sites) {
+        if(site.name != req.subdomains[0]) continue;
+        return res.sendStatus(200);
+    }
+
+    res.sendStatus(403);
 });
 
-app.use("/api/auth", authUnprotectedRoutes);
+const apiRouter = express.Router();
+
+apiRouter.use("/auth", authUnprotectedRoutes);
 
 const protectedRouter = express.Router();
 
 protectedRouter.use(async (req: Request, res: Response, next: NextFunction) => {
-    if(!req.sessionSecret) return res.status(401).send({ error: "No active session" });
-    const userId = Number(await redis.hGet(`session:${req.sessionSecret}`, "user"));
-    if(!userId) return res.status(400).send({ error: "Invalid session user" });
-    req.userId = userId;
-    next();
+    try {
+        if(!req.sessionSecret) return res.status(401).send({ error: "No active session" });
+        const userId = Number(await redis.hGet(`session:${req.sessionSecret}`, "user"));
+        if(!userId) return res.status(400).send({ error: "Invalid session user" });
+        req.userId = userId;
+        next();
+    } catch(err) {
+        next(err);
+    }
 });
 
-protectedRouter.use("/api/auth", authProtectedRoutes);
-protectedRouter.use("/api/totp", totpRoutes);
+protectedRouter.use("/auth", authProtectedRoutes);
+protectedRouter.use("/totp", totpRoutes);
 
-app.use(protectedRouter);
+const adminRouter = express.Router();
+
+adminRouter.use(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const user = await prisma.user.findFirst({ where: { id: req.userId } });
+        if(!user || !user.admin) return res.status(403).send({ error: "Insufficient permissions" });
+        next();
+    } catch(err) {
+        next(err);
+    }
+});
+
+adminRouter.use(siteRoutes);
+
+protectedRouter.use(adminRouter);
+
+apiRouter.use(protectedRouter);
+
+app.use("/api", apiRouter);
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     if(err instanceof ZodError) {

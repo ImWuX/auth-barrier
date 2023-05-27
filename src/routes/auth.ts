@@ -5,8 +5,6 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { redis, prisma } from "../index.js";
 
-const DEFAULT_PERMISSIONS = 0;
-
 const unprotectedRouter = express.Router();
 
 const zodAuth = zod.object({
@@ -33,7 +31,7 @@ unprotectedRouter.post("/login", async (req: Request, res: Response, next: NextF
     try {
         const { code, username, password } = zodAuth.parse(req.body);
 
-        const user = await prisma.user.findFirst({ where: { username: username } });
+        const user = await prisma.user.findFirst({ where: { username: username }, include: { totp: true } });
         if(user == null) return res.status(404).send({ error: { username: "User does not exist" } });
 
         const isPasswordValid: boolean = await new Promise((resolve) => {
@@ -45,10 +43,9 @@ unprotectedRouter.post("/login", async (req: Request, res: Response, next: NextF
 
         if(!isPasswordValid) return res.status(401).send({ error: { password: "Wrong password" }});
 
-        const totp = await prisma.totp.findFirst({ where: { userId: user.id } });
-        if(totp && totp.enabled) {
+        if(user.totp && user.totp.enabled) {
             if(!code) return res.send({ totp: true });
-            if(!authenticator.check(code, totp.secret)) return res.status(401).send({ error: { totp: "Invalid two factor code" } })
+            if(!authenticator.check(code, user.totp.secret)) return res.status(401).send({ error: { totp: "Invalid two factor code" } })
         }
 
         const session = await createSession(user.id);
@@ -81,7 +78,7 @@ unprotectedRouter.post("/register", async (req: Request, res: Response, next: Ne
                         });
                     });
                 }),
-                permissions: DEFAULT_PERMISSIONS
+                admin: false
             }
         });
 

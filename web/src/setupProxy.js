@@ -2,7 +2,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 
 module.exports = function(app) {
     app.use("/api", createProxyMiddleware({
-        target: "http://thenest.dev:3000",
+        target: "https://auth.thenest.dev",
         changeOrigin: true,
     }));
 };

@@ -23,3 +23,10 @@
     color: rgb(255, 107, 107);
     margin: 0;
 }
+
+.barrier {
+    position: absolute;
+    bottom: 5px;
+    font-size: 0.75rem;
+    opacity: 0.5;
+}
