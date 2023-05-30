@@ -31,7 +31,7 @@ unprotectedRouter.post("/login", async (req: Request, res: Response, next: NextF
     try {
         const { code, username, password } = zodAuth.parse(req.body);
 
-        const user = await prisma.user.findFirst({ where: { username: username }, include: { totp: true } });
+        const user = await prisma.user.findFirst({ where: { username: username }, include: { totp: true, backupCodes: true } });
         if(user == null) return res.status(404).send({ error: { username: "User does not exist" } });
 
         const isPasswordValid: boolean = await new Promise((resolve) => {
@@ -45,7 +45,10 @@ unprotectedRouter.post("/login", async (req: Request, res: Response, next: NextF
 
         if(user.totp && user.totp.enabled) {
             if(!code) return res.send({ totp: true });
-            if(!authenticator.check(code, user.totp.secret)) return res.status(401).send({ error: { totp: "Invalid two factor code" } })
+            if(!authenticator.check(code, user.totp.secret)) {
+                if(user.backupCodes.filter((c) => c.code == code).length <= 0) return res.status(401).send({ error: { totp: "Invalid two factor code" } });
+                await prisma.totpBackupCodes.deleteMany({ where: { code: { equals: code }, userId: { equals: user.id } } });
+            }
         }
 
         const session = await createSession(user.id);
@@ -105,17 +108,57 @@ protectedRouter.post("/logout", async (req: Request, res: Response, next: NextFu
 });
 
 protectedRouter.get("/session", async (req: Request, res: Response, next: NextFunction) => {
-    const user = await prisma.user.findFirst({ where: { id: req.userId } });
+    const user = await prisma.user.findFirst({ where: { id: req.userId }, include: { totp: true } });
     if(!user) return res.status(404).send({ error: "Non-existant session user" });
-    const totp = await prisma.totp.findFirst({ where: { userId: req.userId } });
     try {
         res.send({
             user: {
                 id: user.id,
                 username: user.username,
-                totp: totp && totp.enabled
+                totp: user.totp && user.totp.enabled,
+                isAdmin: user.admin
             }
         });
+    } catch(err) {
+        next(err);
+    }
+});
+
+const zodPasswordReset = zod.object({
+    password: zod.string().min(3).max(128),
+    code: zod.string().optional()
+});
+
+protectedRouter.post("/passwordreset", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { password, code } = zodPasswordReset.parse(req.body);
+        const user = await prisma.user.findFirst({ where: { id: req.userId }, include: { totp: true, backupCodes: true } });
+        if(!user) return res.status(404).send({ error: "Non-existant session user" });
+
+        if(user.totp && user.totp.enabled) {
+            if(!code) return res.status(401).send({ error: "Invalid two factor code" });
+            if(!authenticator.check(code, user.totp.secret)) {
+                if(user.backupCodes.filter((c) => c.code == code).length <= 0) return res.status(401).send({ error: { totp: "Invalid two factor code" } });
+                await prisma.totpBackupCodes.deleteMany({ where: { code: { equals: code }, userId: { equals: user.id } } });
+            }
+        }
+
+        await prisma.user.update({
+            data: {
+                password: await new Promise((resolve) => {
+                    bcrypt.genSalt(10, (err, salt) => {
+                        if(err) throw err;
+                        bcrypt.hash(password, salt, (err, hash) => {
+                            if(err) throw err;
+                            resolve(hash);
+                        });
+                    });
+                }),
+            },
+            where: { id: req.userId }
+        });
+
+        res.sendStatus(200);
     } catch(err) {
         next(err);
     }

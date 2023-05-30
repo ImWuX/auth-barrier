@@ -9,6 +9,7 @@ import { createClient as createRedisClient } from "redis";
 import { unprotectedRouter as authUnprotectedRoutes, protectedRouter as authProtectedRoutes } from "./routes/auth.js";
 import totpRoutes from "./routes/totp.js";
 import siteRoutes from "./routes/sites.js";
+import userRoutes from "./routes/users.js";
 
 declare global {
     namespace Express {
@@ -26,6 +27,7 @@ declare global {
             SESSION_LENGTH: string;
             ROOT_DOMAIN: string;
             COOKIE_NAME: string;
+            WEB_BUILD: string;
         }
     }
 }
@@ -66,7 +68,8 @@ app.get("/nginxauth", async (req: Request, res: Response) => {
         return res.sendStatus(200);
     }
 
-    res.sendStatus(403);
+    if(await prisma.site.findFirst({ where: { name: req.subdomains[0] }})) return res.sendStatus(403);
+    res.sendStatus(200);
 });
 
 const apiRouter = express.Router();
@@ -102,7 +105,8 @@ adminRouter.use(async (req: Request, res: Response, next: NextFunction) => {
     }
 });
 
-adminRouter.use(siteRoutes);
+adminRouter.use("/sites", siteRoutes);
+adminRouter.use("/users", userRoutes);
 
 protectedRouter.use(adminRouter);
 
@@ -120,9 +124,9 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 // React app
-app.use(express.static(path.join(__dirname, "web")));
+app.use(express.static(process.env.WEB_BUILD));
 app.get("*", async (req: Request, res: Response) => {
-    res.sendFile(path.join(__dirname, "web", "index.html"));
+    res.sendFile(path.join(process.env.WEB_BUILD, "index.html"));
 });
 
 server.listen(Number(process.env.PORT));

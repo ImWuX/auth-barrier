@@ -31,3 +31,38 @@
     width: 50px;
     aspect-ratio: 1;
 }
+
+.site {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.siteusers p {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.8)
+}
+
+.siteactions {
+    display: flex;
+    gap: 8px;
+}
+
+.user {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.divider {
+    margin: auto;
+    background-color: rgba(220, 220, 220, 0.25);
+    height: 1px;
+    width: 98%;
+}
+
+.editsiteactions {
+    display: flex;
+    
+}

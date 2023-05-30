@@ -1,0 +1,29 @@
+.combo {
+    padding: 10px;
+    font-size: 1rem;
+    outline: none;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.combodrop {
+    width: 100%;
+    padding: 5px 0;
+    font-size: 1rem;
+    outline: none;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.combodropitem, .nodropitem {
+    list-style: none;
+    padding: 10px;
+}
+
+.combodropitem:hover {
+    background: rgba(255, 255, 255, 0.15);
+}

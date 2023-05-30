@@ -78,7 +78,10 @@ router.post("/disable", async (req: Request, res: Response, next: NextFunction) 
         const totp = await prisma.totp.findFirst({ where: { userId: { equals: req.userId } } });
         if(!totp || !totp.enabled) return res.status(404).send({ error: "Two factor authentication is not enabled" });
 
-        if(!authenticator.check(code, totp.secret)) return res.status(401).send({ error: "Invalid code" });
+        if(!authenticator.check(code, totp.secret)) {
+            const codes = await prisma.totpBackupCodes.findMany({ where: { userId: { equals: req.userId } } });
+            if(codes.filter((c) => c.code == code).length <= 0) return res.status(401).send({ error: "Invalid code" });
+        }
         await prisma.totp.delete({ where: { userId: req.userId } });
         res.sendStatus(200);
     } catch(err) {

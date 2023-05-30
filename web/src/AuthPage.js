@@ -32,7 +32,7 @@ const AuthPage = ({ isRegister }) => {
             window.open(searchParams.get("url")?.toString(), "_self");
         else
             navigate("/portal");
-    }, [setError, navigate, isRegister, username, password, confirmPassword, requireTotp, totpCode]);
+    }, [setError, navigate, isRegister, username, password, confirmPassword, requireTotp, totpCode, searchParams]);
 
     useEffect(() => {
         function handleKeyDown(event) {
@@ -63,7 +63,7 @@ const AuthPage = ({ isRegister }) => {
                     : <Link to="/register" className={styles.footer}>Want to create an account? Register</Link>
                 }
             </Surface>
-            <p className={styles.barrier}>Powered by <a href="https://github.com/ImWuX/auth-barrier" target="_blank">Auth Barrier</a></p>
+            <p className={styles.barrier}>Powered by <a href="https://github.com/ImWuX/auth-barrier" target="_blank" rel="noreferrer">Auth Barrier</a></p>
         </div>
     );
 }
