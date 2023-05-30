@@ -46,7 +46,7 @@ unprotectedRouter.post("/login", async (req: Request, res: Response, next: NextF
         if(user.totp && user.totp.enabled) {
             if(!code) return res.send({ totp: true });
             if(!authenticator.check(code, user.totp.secret)) {
-                if(user.backupCodes.filter((c) => c.code == code).length <= 0) return res.status(401).send({ error: { totp: "Invalid two factor code" } });
+                if(user.backupCodes.filter((c: any) => c.code == code).length <= 0) return res.status(401).send({ error: { totp: "Invalid two factor code" } });
                 await prisma.totpBackupCodes.deleteMany({ where: { code: { equals: code }, userId: { equals: user.id } } });
             }
         }
@@ -138,7 +138,7 @@ protectedRouter.post("/passwordreset", async (req: Request, res: Response, next:
         if(user.totp && user.totp.enabled) {
             if(!code) return res.status(401).send({ error: "Invalid two factor code" });
             if(!authenticator.check(code, user.totp.secret)) {
-                if(user.backupCodes.filter((c) => c.code == code).length <= 0) return res.status(401).send({ error: { totp: "Invalid two factor code" } });
+                if(user.backupCodes.filter((c: any) => c.code == code).length <= 0) return res.status(401).send({ error: { totp: "Invalid two factor code" } });
                 await prisma.totpBackupCodes.deleteMany({ where: { code: { equals: code }, userId: { equals: user.id } } });
             }
         }
