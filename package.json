@@ -3,10 +3,10 @@
     "version": "1.0.0",
     "description": "Autbarrier is a simple authentication system mainly targetting authentication for NGINX",
     "scripts": {
-        "build": "npm run build-backend && npm run build-web",
+        "build": "npm run build-backend && (cd web && npm run build)",
         "build-backend": "tsc",
-        "build-web": "rm -r build/web && cd web && npm run build && mv -T build ../build/web",
-        "watch": "tsc-watch --onSuccess \"node build/index.js\""
+        "watch": "tsc-watch --onSuccess \"node build/index.js\"",
+        "prod": "npm install && (cd web && npm install) && npm run build && npx prisma db push"
     },
     "author": "WuX",
     "license": "ISC",

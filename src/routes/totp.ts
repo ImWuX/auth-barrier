@@ -80,7 +80,7 @@ router.post("/disable", async (req: Request, res: Response, next: NextFunction) 
 
         if(!authenticator.check(code, totp.secret)) {
             const codes = await prisma.totpBackupCodes.findMany({ where: { userId: { equals: req.userId } } });
-            if(codes.filter((c) => c.code == code).length <= 0) return res.status(401).send({ error: "Invalid code" });
+            if(codes.filter((c: any) => c.code == code).length <= 0) return res.status(401).send({ error: "Invalid code" });
         }
         await prisma.totp.delete({ where: { userId: req.userId } });
         res.sendStatus(200);
