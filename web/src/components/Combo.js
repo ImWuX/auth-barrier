@@ -4,7 +4,7 @@ import styles from "./Combo.module.css";
 
 const Combo = ({ list, display, selected, setSelected, fillWidth }) => {
     const [query, setQuery] = useState("");
-    const filteredList = list.filter((item) => (display ? display(item) : item).startsWith(query));
+    const filteredList = list.filter((item) => (display ? display(item) : item).toLowerCase().startsWith(query.toLowerCase()));
 
     return (
         <Combobox value={selected} onChange={setSelected}>
