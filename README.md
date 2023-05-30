@@ -6,3 +6,5 @@ Auth Barrier is a simple authentication system meant for securing NGINX configur
 2. Copy the `.env.setup` file to `.env` and `web/.env.setup` to `web/.env` and configure them.
 3. Run `npm run prod` in the root directory.
 4. Finish deployment by setting up Auth Barrier as a daemon of some sort. Auth Barrier in production requires the environment variables present in `.env.prod`. These can be passed however you'd like.
+
+`auth-barrier.service` contains an example of a systemd daemon for Auth barrier.

@@ -1,0 +1,19 @@
+[Unit]
+Description=Auth Barrier
+After=nginx.service
+
+[Service]
+Type=simple
+Environment=APP_NAME=Auth Barrier
+Environment=PORT=3000
+Environment=REDIS_URL=redis://localhost:6379
+Environment=DATABASE_URL=mysql://user:pass@localhost:3306/authbarrier
+Environment=SESSION_LENGTH=604800
+Environment=ROOT_DOMAIN=yoursite.com
+Environment=COOKIE_NAME=authbarrier_session_secret
+Environment=WEB_BUILD=/rootdir/web/build
+ExecStart=/bin/node /rootdir/build/index.js
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
